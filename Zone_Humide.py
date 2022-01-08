@@ -29,6 +29,7 @@ def LoadImgInd (PathFile):
         print('Problème dans le chemin d\'accès')
         sys.exit(1)
 
+        
 def ImgHeight(DSM, DTM):
     try:
         p = DSM-DTM
@@ -36,6 +37,7 @@ def ImgHeight(DSM, DTM):
     except ValueError:
         print('Problème de dimension du raster')
         sys.exit(1)
+        
 
 def ReclassLidarVeg(matrice):
     """
@@ -70,17 +72,7 @@ def ReclassLidarVeg(matrice):
         print('Problème dans l\'attribution de Valeurs')
         sys.exit(1)
 
-def MaskShapeFile(PathRaster, PathShapelfile):
-    try:
-        ds = gdal.Open(PathRaster).ReadAsArray()
-        nds = np.array(ds)
-            
-
-        print('En cours de dvlp')
-    except ValueError:
-        print('CHEH')
-        pass
-
+        
 def Resample(NameFile, Xres, Yres , algo):
     """
 
@@ -100,6 +92,7 @@ def Resample(NameFile, Xres, Yres , algo):
         print("Le chemin d'accès vers l'image n'est pas conforme, \n par exemple sous Linux : '/home/user/Bureau/Image.tif'")
         sys.exit(1)
 
+        
 def VtoR (PathShp, Output, Newkey, TypeImg = 'GTiff', CRS = 2154, Resolution = 0.5):
     """
     :param PathShp: Chemin d'accès absolue du fichier vecteur à convertir en raster (type = str)
@@ -142,6 +135,7 @@ def VtoR (PathShp, Output, Newkey, TypeImg = 'GTiff', CRS = 2154, Resolution = 0
         print('CHEH')
         sys.exit(1)
 
+        
 def WriteRas (Matrice,OUTPUT, Newkey, PathRasRef ):
     try:
         ds = gdal.Open(PathRasRef)
@@ -154,6 +148,7 @@ def WriteRas (Matrice,OUTPUT, Newkey, PathRasRef ):
     except ValueError:
         print("Problème de projection")
 
+        
 def Reproj (NameFile,ProjVoulu):
     try:
         ds =gdal.Open(NameFile)
@@ -163,26 +158,24 @@ def Reproj (NameFile,ProjVoulu):
         print("CHEH")
         pass
 
+    
 def Crop(PathImg, Zone, ReturnArray= True):
     try:
 
         xMin, xMax, yMin, yMax = Zone
         ds = gdal.Open(PathImg)
         ds_gt = ds.GetGeoTransform()
-        print(ds_gt)
+
         row1 = int((yMax - ds_gt[3]) / ds_gt[5])
-        print('ROW1 :',row1)
+ 
         col1 = int((xMin - ds_gt[0]) / ds_gt[1])
-        print('COL1 :',col1)
+
         row2 = int((yMin - ds_gt[3]) / ds_gt[5])
-        print('ROW2 :',row2)
+
         col2 = int((xMax - ds_gt[0]) / ds_gt[1])
-        print('COL2 :',col2)
-        print('C\'est lopération col2-col1+1 :','\n',abs(col2 - col1 + 1))
-        print('C\'est lopération row2-row1+1 :', '\n', abs(row2 - row1 + 1))
         nArray = ds.ReadAsArray(abs(col1), abs(row1), abs(col2 - col1 + 1), abs(row2 - row1 + 1))
         nArray2 = np.array(nArray).astype(np.float32)
-        print(nArray2)
+
 
         if ReturnArray is True:
             return nArray2
