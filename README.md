@@ -56,7 +56,7 @@ Après l'espace dédié au chargement des librairies,
 un espace de chargement des liens vers les différentes données est proposé 
 afin de lancer plus facilement le programme principale dans son intégralité.
 
-Le programme principale ( à partir de if __name__=='__main__'), n'est pas complet dans les traitements à effectués pour pouvoir sortir les images pré-traitées.
+Le programme principale ( à partir de if __name__=='__main__'), n'est pas complet dans les traitements à effectuer pour pouvoir sortir les images pré-traitées.
 Mais le développement d'autres fonctions permettant d'automatiser les traitements est à venir.
 
 Nous vous engagons à utiliser les fonctions mais pas forcément le programme principale car il répond à des besoins de standardisations de données particulier.
@@ -78,10 +78,10 @@ A SAVOIR
 
 Nous essayerons de regrouper les deux programmes de ce répertoire pour alléger la complexité de ces programmes.
 
-Les seuils utilisées pour le reclassement des données Lidar sont fixes, pour les changer il faut changer les valeurs exprimées dans les conditions np.where()
-c'est le premier arguments du np.where.
+Les seuils utilisés pour le reclassement des données Lidar sont fixes. Pour les changer il faut changer les valeurs exprimées dans les conditions np.where()
+c'est le premier argument du np.where.
 
-Une fonction dédiée au classifieurs sera disponible prochainement.
+Une fonction dédiée aux classifieurs sera disponible prochainement.
 
 Une fonction d'alignement des rasters (correction géométrique), sera développée prochainement.
 
@@ -91,9 +91,9 @@ soyez indulgent dans vos retours, nous ne sommes pas professionnel (pour l'insta
 Les données standardisées = la même résolution spatiale, le même nombre de lignes/colonnes, le même système de projection
 avant d'être classifiées. 
 
-La fonction crop peut être difficile à utilisées, nous cherchons activement le moyen de rendre plus stable cette fonction
+La fonction crop peut être difficile à utiliser, nous cherchons activement le moyen de rendre plus stable cette fonction.
 
-Et n'hésiter pas à faire vos retours
+Et n'hésitez pas à faire vos retours!
 
 
 
