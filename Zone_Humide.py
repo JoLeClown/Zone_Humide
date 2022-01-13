@@ -355,6 +355,7 @@ def InversValue(PathImg):
 if __name__ == '__main__':
 
     # Création du DHM
+    """
 
     DSM = LoadImgInd(PathImgDSM)
 
@@ -417,38 +418,31 @@ if __name__ == '__main__':
     MaskZh = Mask(PathImg1=PathDossierCreation+'Mask4.tif',PathImg2=PathDossierCreation+'Raster_LimiteZh_crop_align.tif')
 
     WriteRas(MaskZh,PathDossierCreation,'MaskFinal.tif',PathDossierCreation+'Raster_LimiteZh_crop_align.tif')
-
-    
-
-    
-
-
-    # Les coordonnées
-    """
-    #Coordonées de Crop
-    P1 = 366267.144, 6837264.898
-    P1_correcte = 366285.65,6837251.21
-    P2 = 367993.388,6831503.872
-    P2_correct = 367993.249,6831504.041
-    
-    Point_origine_raster = 366267.288,6831503.917
-    
-    #Coordonnées TEST MASK
-    
-    P1 = 367102.1,6833203.0
-    P2 = 369207.7,6830724.6
-    
-    #Divers
-    P3 = 366286.241,6837250.620    
     """
 
+    #ImgMaskOptique = LoadImgInd(PathDossierCreation+'MaskFinal.tif')
 
+    #maskTotal = np.where(ImgMaskOptique>0,1,0)
 
+    #WriteRas(maskTotal,PathDossierCreation,'MaskOptique.tif',PathDossierCreation+'MaskFinal.tif')
 
+    # Changement de la Reclass Lidar pour classification
 
+    #Lidar=LoadImgInd(PathDossierCreation+'MaskFinal.tif')
+    #Lidar_sans_nan = np.where(np.isnan(Lidar), 0,Lidar)
+    #WriteRas(Lidar_sans_nan,PathDossierCreation,'Lidar_reclass.tif',PathDossierCreation+'MaskFinal.tif')
 
+    # Vérification de changement entre les deux classifications Kmeans
 
+    Fusion = LoadImgInd(PathDossierCreation+'MiniBatchKMeans_Kompsat2multipli_15classes.tif')
 
+    SansFusion = LoadImgInd(PathDossierCreation+'MiniBatchKMeans_Kompsat2_15classes.tif')
+
+    chang = Fusion-SansFusion
+
+    print(np.count_nonzero(chang))
+
+    print('Nos classifications sont différence de  ', (np.count_nonzero(chang)/(chang.shape[0]*chang.shape[1]))*100,'%')
 
 
 
