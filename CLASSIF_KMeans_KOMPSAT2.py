@@ -83,7 +83,7 @@ new_shape = (matrice_stack.shape[0] * matrice_stack.shape[1], matrice_stack.shap
 data = matrice_stack[:, :, :np.int(matrice_stack.shape[2])].reshape(new_shape)
 
 # APPLICATION DE LA CLASSIFICATION NON-SUPERVISEE PAR KMEANS
-model_kmeans1 = MiniBatchKMeans(n_clusters=15, random_state=0, batch_size=6, max_iter=150) #creation du modele de classification
+model_kmeans1 = MiniBatchKMeans(n_clusters=15, random_state=0, batch_size=4758, max_iter=152) #creation du modele de classification
 KMeans1 = model_kmeans1.fit(data) #application du modele de classification au jeu de donnees
 result_KMeans1 = KMeans1.predict(data) #stockage des resultats de la classification
 
