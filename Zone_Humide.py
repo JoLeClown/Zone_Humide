@@ -355,19 +355,20 @@ def InversValue(PathImg):
 if __name__ == '__main__':
 
     # Création du DHM
-    """
 
     DSM = LoadImgInd(PathImgDSM)
 
     DTM = LoadImgInd(PathImgDTM)
 
     DHM = ImgHeight(DSM, DTM)
+    
 
     # Classification selon la hauteur de la végétation des données LiDAR
 
     Re = ReclassLidarVeg(DHM)
 
     WriteRas(Re,PathDossierCreation, NomRasterReclassLidar, PathRasRef=PathImgDSM)
+    
 
     # Rasterisation des fichiers vecteurs
 
@@ -378,6 +379,7 @@ if __name__ == '__main__':
     VtoR(PathFichierShp+'routes.shp',PathDossierCreation,'routes.tif')
 
     VtoR(PathFichierShp+'plan_eau.shp', PathDossierCreation, 'Plan_Eau.tif')
+    
 
     # Inversion des valeurs de pixel et Création du raster avec les valeurs inversées
 
@@ -396,6 +398,7 @@ if __name__ == '__main__':
     route_inverse = InversValue(PathDossierCreation+'routes_crop_align.tif')
 
     WriteRas(route_inverse,PathDossierCreation,'Route_inverse.tif',PathDossierCreation+'routes_crop_align.tif')
+    
 
     # Masquage des Zones d'intérêts des données Lidar
 
@@ -418,19 +421,22 @@ if __name__ == '__main__':
     MaskZh = Mask(PathImg1=PathDossierCreation+'Mask4.tif',PathImg2=PathDossierCreation+'Raster_LimiteZh_crop_align.tif')
 
     WriteRas(MaskZh,PathDossierCreation,'MaskFinal.tif',PathDossierCreation+'Raster_LimiteZh_crop_align.tif')
-    """
+    
+    ImgMaskOptique = LoadImgInd(PathDossierCreation+'MaskFinal.tif')
 
-    #ImgMaskOptique = LoadImgInd(PathDossierCreation+'MaskFinal.tif')
+    maskTotal = np.where(ImgMaskOptique>0,1,0)
 
-    #maskTotal = np.where(ImgMaskOptique>0,1,0)
-
-    #WriteRas(maskTotal,PathDossierCreation,'MaskOptique.tif',PathDossierCreation+'MaskFinal.tif')
+    WriteRas(maskTotal,PathDossierCreation,'MaskOptique.tif',PathDossierCreation+'MaskFinal.tif')
+    
 
     # Changement de la Reclass Lidar pour classification
 
-    #Lidar=LoadImgInd(PathDossierCreation+'MaskFinal.tif')
-    #Lidar_sans_nan = np.where(np.isnan(Lidar), 0,Lidar)
-    #WriteRas(Lidar_sans_nan,PathDossierCreation,'Lidar_reclass.tif',PathDossierCreation+'MaskFinal.tif')
+    Lidar=LoadImgInd(PathDossierCreation+'MaskFinal.tif')
+    
+    Lidar_sans_nan = np.where(np.isnan(Lidar), 0,Lidar)
+    
+    WriteRas(Lidar_sans_nan,PathDossierCreation,'Lidar_reclass.tif',PathDossierCreation+'MaskFinal.tif')
+    
 
     # Vérification de changement entre les deux classifications Kmeans
 
