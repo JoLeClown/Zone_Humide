@@ -13,18 +13,16 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.cluster import MiniBatchKMeans
+from sklearn.cluster import KMeans
+from sklearn.covariance import EmpiricalCovariance
 
-chemin_stack = r"C:\Users\richa\Desktop\M2_TELENVI\Semestre1\Traitement_image\TD_ZH\DATA\Kompsat\kompsat_L93.tif"
-
-# tell GDAL to throw Python exceptions, and register all drivers
-gdal.UseExceptions()
-gdal.AllRegister()
+img = r"C:\Users\richa\Desktop\M2_TELENVI\Semestre1\Traitement_image\TD_ZH\DATA\Kompsat\mask\Kompsat_L93_mask.tif"
 
 # -----------------------------------------------------------------------------------------------
 # Fonction 1 : ouverture et lecture d'un stack en array
 # -----------------------------------------------------------------------------------------------
 
-def stack2array(chemin_stack):
+def stack2array(img):
     """
     Parametres
     -----
@@ -36,7 +34,7 @@ def stack2array(chemin_stack):
         stack_array(numpy array): stack matrice en réflectance
         
     """    
-    image = gdal.Open(chemin_stack) #ouverture de l'image (stack R,V,B,PIR)
+    image = gdal.Open(img) #ouverture de l'image (stack R,V,B,PIR)
 
     #creation d'une matrice vide avec les proprietes de l'image
     stack_array = np.zeros((image.RasterYSize, image.RasterXSize, image.RasterCount), #RasterYSize = nb pixel en Y, RasterXSize = nb pixel en X, RasterCount = nb de bandes
@@ -48,43 +46,65 @@ def stack2array(chemin_stack):
     
     return image, stack_array
 
+# -----------------------------------------------------------------------------------------------
+# Fonction 2 : export de l'image resultat en tif
+# -----------------------------------------------------------------------------------------------
+
+def export2GTiff(chemin_export, image_matrice, image, image_rslt):
+    """
+    Parametres
+    -----
+        chemin_export (chemin) : lieu d'export de l'image
+        image_matrice (numpy array) : image ouverte en matrice
+        image (raster) : image ouverte avec gdal
+        image_rslt (numpy array) : image en matrice a exporter (classif,...)
+        
+    Returns
+    -------
+        pas de return car pas de retour de variable necessaire
+        
+    """    
+    driver = gdal.GetDriverByName('GTiff')
+    dataset = driver.Create(chemin_export, image_matrice.shape[1], image_matrice.shape[0], 1, gdal.GDT_Float32)
+    dataset.SetGeoTransform(image.GetGeoTransform())
+    dataset.SetProjection(image.GetProjection())
+    dataset.GetRasterBand(1).WriteArray(image_rslt)
+    dataset.FlushCache()
+    dataset = None
+        
 # ================================================================================================
 # PROGRAMME PRINCIPAL - MAIN
 # ================================================================================================
 
-image, matrice_stack = stack2array(chemin_stack)
+image, matrice_stack = stack2array(img) #stockage de la sortie 1 (return image) et 2 (return stack_array)
 
 #reordonner la matrice : chaque bande sur une colonne
 new_shape = (matrice_stack.shape[0] * matrice_stack.shape[1], matrice_stack.shape[2])
 data = matrice_stack[:, :, :np.int(matrice_stack.shape[2])].reshape(new_shape)
 
 # APPLICATION DE LA CLASSIFICATION NON-SUPERVISEE PAR KMEANS
-model_kmeans = MiniBatchKMeans(n_clusters=16, random_state=0, batch_size=6, max_iter=150) #creation du modele de classification
-KMeans = model_kmeans.fit(data) #application du modele de classification au jeu de donnees
-result_KMeans = KMeans.predict(data) #stockage des resultats de la classification
+model_kmeans1 = MiniBatchKMeans(n_clusters=16, random_state=0, batch_size=6, max_iter=150) #creation du modele de classification
+KMeans1 = model_kmeans1.fit(data) #application du modele de classification au jeu de donnees
+result_KMeans1 = KMeans1.predict(data) #stockage des resultats de la classification
 
-#visualition de la classification
-Classif_KMeans = result_KMeans.reshape(matrice_stack[:, :, 0].shape)
-print('Reshaped back to {}'.format(Classif_KMeans.shape))
-
-fig, ax = plt.subplots(figsize=(50, 30))
-
-kmeans_plot = ax.imshow(Classif_KMeans)
-plt.show()
+model_kmeans2 = KMeans(n_clusters = 16, random_state = 0, max_iter = 150)
+KMeans2 = model_kmeans2.fit(data)
+result_KMeans2 = KMeans2.predict(data)
 
 # EXPORT DE LA CLASSIFICATION EN GEOTIFF
 
-chemin_export = r"C:\Users\richa\Desktop\M2_TELENVI\Semestre1\Traitement_image\TD_ZH\KMeans_Kompsat2.tif"
+#Reshape de la classification
+Classif_KMeans1 = result_KMeans1.reshape(matrice_stack[:, :, 0].shape)
+print('Reshaped back to {}'.format(Classif_KMeans1.shape))
 
-driver = gdal.GetDriverByName('GTiff')
-dataset = driver.Create(chemin_export, matrice_stack.shape[1], matrice_stack.shape[0], 1, gdal.GDT_Float32)
-dataset.SetGeoTransform(image.GetGeoTransform())
-dataset.SetProjection(image.GetProjection())
-dataset.GetRasterBand(1).WriteArray(Classif_KMeans)
-dataset.FlushCache()
+Classif_KMeans2 = result_KMeans2.reshape(matrice_stack[:, :, 0].shape)
+print('Reshaped back to {}'.format(Classif_KMeans2.shape))
 
-
-
+#Export
+chemin_export1 = r"C:\Users\richa\Desktop\M2_TELENVI\Semestre1\Traitement_image\MiniBatchKMeans_Kompsat2.tif"
+export2GTiff(chemin_export1, matrice_stack, image, Classif_KMeans1)
+chemin_export2 = r"C:\Users\richa\Desktop\M2_TELENVI\Semestre1\Traitement_image\KMeans_Kompsat2.tif"
+export2GTiff(chemin_export2, matrice_stack, image, Classif_KMeans2)
 
 
 
