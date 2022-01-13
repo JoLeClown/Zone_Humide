@@ -8,7 +8,7 @@ import sys
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from osgeo import gdal, ogr, osr
+from osgeo import gdal, ogr, osr, gdalconst
 import seaborn as sns
 from math import ceil
 from PIL import Image
@@ -21,7 +21,7 @@ PathImgDSM ='/home/ju/Bureau/DSM_Reproj.tif'
 
 PathImgDTM = '/home/ju/Bureau/DTM_Reproj.tif'
 
-PathDossierCreation = '/home/ju/Bureau/'
+PathDossierCreation = '/home/ju/Bureau/Laurence_resultat/'
 
 PathShpLimite = '/home/ju/Bureau/M2/Traitement_image_Zone_Humide/TD-ZH/3-veget_zh/ancillary_data/limites_zh.shp'
 
@@ -29,15 +29,21 @@ NomRasterReclassLidar = 'RECLASS_LIDAR.tif'
 
 NomRasterLimiteZh = 'Raster_LimiteZh.tif'
 
+PathImgLidarAlign = '/home/ju/Bureau/RECLASS2_CROP_align.tif'
+
+PathImgMaskLimiteZH = '/home/ju/Bureau/Raster_LimiteZh_crop_align.tif'
+
+PathFichierShp = '/home/ju/Bureau/M2/Traitement_image_Zone_Humide/TD-ZH/3-veget_zh/ancillary_data/'
+
+zone = [366267.144, 367993.388, 6831503.872, 6837264.898]
 # ======================= Fonction ================================
 
 
 def LoadImgInd (PathFile):
     try:
-        ds = gdal.Open(PathFile)
+        ds = gdal.Open(PathFile).ReadAsArray()
 
         #print(ds.GetGeoTransform(),'\n', ds.GetProjection())
-        ds = ds.ReadAsArray()
 
         npa = np.array(ds)
 
@@ -292,71 +298,59 @@ def Crop(PathImg, Zone, ReturnArray= True):
         print('Don\'t Panic')
         pass
 
-def CROPMASK(PathImg, Zone, ReturnArray=True): # Ne Marche Pas
-
-    try :
-
-        xMin, xMax, yMin, yMax = Zone
-        ds = gdal.Open(PathImg)
-        ds_gt = ds.GetGeoTransform()
-        print(ds_gt)
-        row1 = int((yMax - ds_gt[3]) / ds_gt[5])
-        print('ROW1 :', row1)
-        col1 = int((xMin - ds_gt[0]) / ds_gt[1])
-        print('COL1 :', col1)
-        row2 = int((yMin - ds_gt[3]) / ds_gt[5])
-        print('ROW2 :', row2)
-        col2 = int((xMax - ds_gt[0]) / ds_gt[1])
-        print('COL2 :', col2)
-        print('C\'est lopération col2-col1+1 :', '\n', abs(col2 - col1 + 1))
-        print('C\'est lopération row2-row1+1 :', '\n', abs(row2 - row1 + 1))
-        nArray = ds.ReadAsArray(col2, row2, abs(col1-col2+1), abs(row1-row2+1))
-        nArray2 = np.array(nArray).astype(np.float32)
-        print(nArray2)
-
-        if ReturnArray is True :
-            return nArray2
-
-        else :
-            driver = gdal.GetDriverByName('GTiff')
-            Output = str(input('Mettre le chemin d\'accès vers le dossier d\'enregistrement : '))
-            Namefile = str(input('Rentrer le nom du fichier : '))
-            p = driver.Create(Output + Namefile, nArray2.shape[1], nArray2.shape[0], 1, gdal.GDT_Float32)
-            p.SetGeoTransform([xMin, ds_gt[1], ds_gt[2], yMax, ds_gt[4], ds_gt[5]])
-            p.SetProjection(ds.GetProjection())
-            p.GetRasterBand(1).WriteArray(nArray)
-            p.FlushCache()
-
-    except KeyError :
-        print('Don\'t Panic')
-        pass #
-
-def Mask(PathImg1, PathImg2):
+def Mask(PathImg1=None, PathImg2=None,modArray=False, matrice1=None, matrice2=None):
     """
 
     :param PathImg1: Chemin d'accès de l'image à masqué (type = str)
     :param PathImg2: Chemin d'accès de limage servant de masque (type = str)
     :return: Retourne une matrice masqué (type = np.array)
     """
-    try:
-        ds1 = gdal.Open(PathImg1).ReadAsArray()
+    if modArray is False:
+        try:
+            ds1 = LoadImgInd(PathImg1)
 
-        npds1 = np.array(ds1)
+            ds2 = LoadImgInd(PathImg2)
 
-        ds2 = gdal.Open(PathImg2).ReadAsArray()
+            npds2_norma = np.where(ds2==0,np.nan,1)
 
-        npds2 = np.array(ds2)
+            mask = ds1/npds2_norma
 
-        mask = npds1/npds2
+            maskNorma = np.where(mask<0,np.nan,mask)
 
-        return mask
+            return maskNorma
 
-    except ZeroDivisionError:
-        pass
+        except ZeroDivisionError:
+            pass
 
-    except ValueError:
-        print('CHEH')
-        pass
+        except RuntimeWarning:
+            pass
+
+        except ValueError:
+            print('CHEH')
+            pass
+    if modArray is True:
+        try:
+            ds = matrice1/matrice2
+            return ds
+
+        except ZeroDivisionError:
+            pass
+
+        except RuntimeWarning :
+            pass
+
+        except ValueError :
+            print('CHEH')
+            pass
+
+def InversValue(PathImg):
+
+    ds = LoadImgInd(PathImg)
+
+    ds_inverse = np.where(ds==255,0,1)
+
+    return ds_inverse
+
 
 if __name__ == '__main__':
 
@@ -374,30 +368,62 @@ if __name__ == '__main__':
 
     WriteRas(Re,PathDossierCreation, NomRasterReclassLidar, PathRasRef=PathImgDSM)
 
+    # Rasterisation des fichiers vecteurs
+
     VtoR(PathShpLimite, PathDossierCreation, NomRasterLimiteZh)
 
-    zone = [366267.144,367993.388, 6831503.872, 6837264.898]
+    VtoR(PathFichierShp+'cours_eau.shp', PathDossierCreation,'Cours_Eau.tif')
 
-    DHM_crop= Crop(PathDossierCreation+NomRasterReclassLidar, zone, ReturnArray=False)
+    VtoR(PathFichierShp+'routes.shp',PathDossierCreation,'routes.tif')
 
-    #Mask_LimiteZH = CROPMASK('/home/ju/Bureau/Raster_LimiteZh.tif', zone)
+    VtoR(PathFichierShp+'plan_eau.shp', PathDossierCreation, 'Plan_Eau.tif')
 
-    # PARTIE SUR LE RASTER MASK (COUCHE VECTEUR => RASTER) TENTATIVE DE CROP
+    # Inversion des valeurs de pixel et Création du raster avec les valeurs inversées
 
-    Lidar = gdal.Open('/home/ju/Bureau/RECLASS2_CROP.tif').ReadAsArray()
+    bati_inverse = InversValue(PathDossierCreation+'Cours_Eau_crop_align.tif')
 
-    npLidar= np.array(Lidar[:,:-1])
+    WriteRas(bati_inverse,PathDossierCreation,'Bati_inverse.tif',PathDossierCreation+'Bati_crop_align.tif')
 
-    Limite = gdal.Open('/home/ju/Bureau/Raster_LimiteZh_crop.tif').ReadAsArray()
+    cour_eau_inverse = InversValue(PathDossierCreation+'Cours_Eau_crop_align.tif')
 
-    npLimite = np.array(Limite[:-1,:])
+    WriteRas(cour_eau_inverse,PathDossierCreation,'Cour_eau_inverse.tif',PathDossierCreation+'Cours_Eau_crop_align.tif')
 
-    Mask = npLidar/npLimite
+    plan_eau_inverse = InversValue(PathDossierCreation+'Plan_Eau_crop_align.tif')
 
-    plt.imshow(Mask)
+    WriteRas(plan_eau_inverse,PathDossierCreation,'Plan_eau_inverse.tif',PathDossierCreation+'Plan_Eau_crop_align.tif')
 
-    plt.show()
+    route_inverse = InversValue(PathDossierCreation+'routes_crop_align.tif')
 
+    WriteRas(route_inverse,PathDossierCreation,'Route_inverse.tif',PathDossierCreation+'routes_crop_align.tif')
+
+    # Masquage des Zones d'intérêts des données Lidar
+
+    Mask_CE = Mask(PathImg1=PathDossierCreation+'RECLASS2_CROP_align.tif',PathImg2=PathDossierCreation+'Cour_eau_inverse.tif')
+
+    WriteRas(Mask_CE,PathDossierCreation,'Mask1.tif',PathDossierCreation+'RECLASS2_CROP_align.tif')
+
+    Mask_PE = Mask(PathImg1=PathDossierCreation+'Mask1.tif',PathImg2=PathDossierCreation+'Plan_eau_inverse.tif')
+
+    WriteRas(Mask_PE,PathDossierCreation,'Mask2.tif',PathDossierCreation+'Plan_eau_inverse.tif')
+
+    Mask_Road=Mask(PathImg1=PathDossierCreation+'Mask2.tif',PathImg2=PathDossierCreation+'Route_inverse.tif')
+
+    WriteRas(Mask_Road,PathDossierCreation,'Mask3.tif',PathDossierCreation+'Route_inverse.tif')
+
+    Mask_bati=Mask(PathImg1=PathDossierCreation+'Mask3.tif',PathImg2=PathDossierCreation+'Bati_inverse.tif')
+
+    WriteRas(Mask_bati,PathDossierCreation,'Mask4.tif',PathDossierCreation+'Bati_inverse.tif')
+
+    MaskZh = Mask(PathImg1=PathDossierCreation+'Mask4.tif',PathImg2=PathDossierCreation+'Raster_LimiteZh_crop_align.tif')
+
+    WriteRas(MaskZh,PathDossierCreation,'MaskFinal.tif',PathDossierCreation+'Raster_LimiteZh_crop_align.tif')
+
+    
+
+    
+
+
+    # Les coordonnées
     """
     #Coordonées de Crop
     P1 = 366267.144, 6837264.898
