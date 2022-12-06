@@ -76,7 +76,7 @@ def ReclassLidarVeg(matrice):
     Quatrième palier = Bush stratum : > 1.8m et <6m
     Cinquième palier = Tree stratum : > 6m
 
-    In fo ========================== TEST =====================================
+    #In fo ========================== TEST =============================================
     :param matrice: 
     :return: Une classification selon les différents paliers
     """
