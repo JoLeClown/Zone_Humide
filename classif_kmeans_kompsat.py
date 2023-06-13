@@ -2,7 +2,7 @@
 """
 Created on Wed Jan  5 15:33:42 2022
 
-@author: richa
+@author: richard Sourbés
 """
 
 import os
